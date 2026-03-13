@@ -6,14 +6,17 @@ struct RecipeDetailView: View {
     @ScaledMetric private var detailIconSize: CGFloat = 24
 
     var body: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 16) {
                 heroImage
                 recipeHeader
                 detailsRow
                 ingredientsList
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
     }
 
     // MARK: - Hero Image
