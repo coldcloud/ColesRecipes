@@ -8,14 +8,15 @@ struct RecipeDetailView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 16) {
-                heroImage
                 recipeHeader
+                heroImage
                 detailsRow
                 ingredientsList
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 8)
         .background(Color(.systemBackground))
     }
 
@@ -57,16 +58,19 @@ struct RecipeDetailView: View {
     // MARK: - Header
 
     private var recipeHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 8) {
             Text(recipe.dynamicTitle)
                 .font(.title2)
                 .fontWeight(.bold)
+                .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
 
             Text(recipe.dynamicDescription)
                 .font(.body)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
+        .frame(maxWidth: .infinity)
         .padding(.horizontal)
     }
 
@@ -77,44 +81,30 @@ struct RecipeDetailView: View {
             if let details = recipe.recipeDetails {
                 HStack(spacing: 0) {
                     if let label = details.amountLabel, let number = details.amountNumber {
-                        detailItem(
-                            label: label,
-                            value: "\(number)",
-                            accessibilityLabel: "\(label) \(number)"
-                        )
+                        detailColumn(label: label, value: "\(number)")
                     }
 
                     if let label = details.prepLabel, let time = details.prepTime {
-                        Divider().frame(height: 40)
-                        detailItem(
-                            label: label,
-                            value: time,
-                            note: details.prepNote,
-                            accessibilityLabel: "\(label) \(time)\(details.prepNote.map { ", \($0)" } ?? "")"
-                        )
+                        Divider().frame(height: 50)
+                        detailColumn(label: label, value: time, note: details.prepNote)
                     }
 
                     if let label = details.cookingLabel, let time = details.cookingTime {
-                        Divider().frame(height: 40)
-                        detailItem(
-                            label: label,
-                            value: time,
-                            accessibilityLabel: "\(label) \(time)"
-                        )
+                        Divider().frame(height: 50)
+                        detailColumn(label: label, value: time)
                     }
                 }
                 .padding(.horizontal)
+                .padding(.vertical, 8)
+                .overlay(alignment: .top) { Divider() }
+                .overlay(alignment: .bottom) { Divider() }
                 .accessibilityElement(children: .combine)
+                .accessibilityLabel(detailsAccessibilityLabel(details))
             }
         }
     }
 
-    private func detailItem(
-        label: String,
-        value: String,
-        note: String? = nil,
-        accessibilityLabel: String
-    ) -> some View {
+    private func detailColumn(label: String, value: String, note: String? = nil) -> some View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.caption)
@@ -123,14 +113,26 @@ struct RecipeDetailView: View {
             Text(value)
                 .font(.title3)
                 .fontWeight(.semibold)
-            if let note = note {
-                Text(note)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+            Text(note ?? " ")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .opacity(note != nil ? 1 : 0)
         }
         .frame(maxWidth: .infinity)
-        .accessibilityLabel(accessibilityLabel)
+    }
+
+    private func detailsAccessibilityLabel(_ details: RecipeDetails) -> String {
+        var parts: [String] = []
+        if let label = details.amountLabel, let number = details.amountNumber {
+            parts.append("\(label) \(number)")
+        }
+        if let label = details.prepLabel, let time = details.prepTime {
+            parts.append("\(label) \(time)\(details.prepNote.map { ", \($0)" } ?? "")")
+        }
+        if let label = details.cookingLabel, let time = details.cookingTime {
+            parts.append("\(label) \(time)")
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Ingredients
