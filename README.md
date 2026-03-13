@@ -7,6 +7,19 @@ A SwiftUI iOS app that displays recipe content from a JSON dataset, built for th
 - Xcode 15+
 - iOS 17+
 - Swift 5.9
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) (for project generation)
+
+## Getting Started
+
+```bash
+# Generate the Xcode project
+xcodegen generate
+
+# Open in Xcode
+open ColesRecipes.xcodeproj
+```
+
+The `.xcodeproj` is generated from `project.yml` and excluded from git.
 
 ## Architecture
 
@@ -25,7 +38,7 @@ Views/           → SwiftUI views (ContentView, RecipeDetailView, RecipeGridVie
 
 2. **Protocol-based dependency injection** — `RecipeSorting` protocol allows the ViewModel to accept a mock sorter in tests, making the sorting logic independently testable without coupling to a concrete implementation.
 
-3. **GeometryReader for orientation detection** — Compares container `width > height` to determine orientation. This is simpler and more reliable than size classes for the portrait-vs-landscape layout switching required by the brief.
+3. **GeometryReader for orientation detection** — Uses a background `GeometryReader` to detect size changes and determine orientation (`width > height`). This avoids interfering with the content layout while reliably tracking rotation.
 
 4. **Optional model fields** — All model properties that could be missing are `Optional`, following the brief's requirement to handle incomplete data gracefully. Image URLs return `nil` when the thumbnail path is missing.
 
@@ -39,10 +52,11 @@ Recipes can be sorted by total time (prep + cooking minutes) in the landscape gr
 - **No navigation in portrait** — Per the brief, portrait shows the first recipe only. With more time, tapping a card in landscape could navigate to a detail view.
 - **AsyncImage without caching** — Uses SwiftUI's built-in `AsyncImage` which doesn't cache across recompositions. A production app would use a dedicated image caching library (e.g., Kingfisher, Nuke).
 - **Snapshot tests require reference images** — First run with `isRecording = true` generates baseline snapshots. CI would need stored reference images.
+- **Portrait upside down not supported** — Modern iPhones (without home button) do not support portrait upside down at the OS level.
 
 ## Accessibility
 
-1. **Accessibility labels** — Images use `dynamicThumbnailAlt` text for VoiceOver descriptions. Recipe detail rows have descriptive labels.
+1. **Accessibility labels** — Images use `dynamicThumbnailAlt` text for VoiceOver descriptions. Recipe detail rows have combined descriptive labels.
 2. **Dynamic Type** — All text uses semantic font styles (`.title2`, `.body`, `.caption`) that scale with the user's preferred text size. `@ScaledMetric` is used for custom spacing.
 3. **VoiceOver grouping** — Recipe detail rows (Serves/Prep/Cooking) use `accessibilityElement(children: .combine)` so VoiceOver reads them as a single coherent element. Decorative bullet points are hidden with `accessibilityHidden(true)`.
 
@@ -60,7 +74,7 @@ Recipes can be sorted by total time (prep + cooking minutes) in the landscape gr
 
 ## Running Tests
 
-Open `ColesRecipes.xcodeproj` in Xcode and press `Cmd+U` to run all tests.
+Generate the project with `xcodegen generate`, open in Xcode, and press `Cmd+U`.
 
 - **Unit tests** (16 tests): RecipeSorter logic, ViewModel state management, JSON decoding, image URL construction
-- **Snapshot tests**: RecipeDetailView, RecipeCardView, RecipeGridView (requires `swift-snapshot-testing` SPM package; set `isRecording = true` on first run)
+- **Snapshot tests**: RecipeDetailView, RecipeCardView, RecipeGridView (requires `swift-snapshot-testing` SPM package; set `isRecording = true` on first run to generate reference images)
